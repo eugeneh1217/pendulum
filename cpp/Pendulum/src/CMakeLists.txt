@@ -1,6 +1,6 @@
 set(BINARY ${CMAKE_PROJECT_NAME})
 
-set(SOURCES main.cpp vmath.h)
+set(SOURCES main.cpp vmath.h runge_kutta_system.h)
 
 add_executable(${BINARY}_run ${SOURCES})
 # add_executable(${BINARY}_run main.cpp vmath.h)
