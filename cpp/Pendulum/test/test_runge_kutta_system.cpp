@@ -51,12 +51,7 @@ double z_deriv(std::vector<double> input)
 {
     return 2 * input[1] + input[2];
 }
-/*RungeKuttaSystem<double> solver;
-TEST(TestRungeKuttaSystem, _INITIALIZE(SetUp)
-{
-    std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
-    solver = RungeKuttaSystem<double>(system);
-}*/
+
 TEST(TestRungeKuttaSystem, TestEvaluate)
 {
     std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
