@@ -67,11 +67,47 @@ TEST(TestRungeKuttaSystem, TestSize)
     RungeKuttaSystem<double> solver(system);
     ASSERT_EQ(solver.size, 2);
 }
+TEST(TestRungeKuttaSystem, TestGetK0)
+{
+	std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
+    RungeKuttaSystem<double> solver(system);
+	std::vector<double> x{-0.5, 1, 2};
+	std::vector<double> expected{3./2, 2};
+	double step = 0.5;
+	ASSERT_EQ(solver.GetK0(x, step), expected);
+}
+TEST(TestRungeKuttaSystem, TestGetKMid)
+{
+	std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
+    RungeKuttaSystem<double> solver(system);
+	std::vector<double> x{-0.5, 1, 2};
+	std::vector<double> expected{19./8, 13./4};
+	double step = 0.5;
+	ASSERT_EQ(solver.GetKMid(x, step, std::vector<double>{3./2, 2}), expected);
+}
+TEST(TestRungeKuttaSystem, TestGetK3)
+{
+	std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
+    RungeKuttaSystem<double> solver(system);
+	std::vector<double> x{-0.5, 1, 2};
+	std::vector<double> expected{317./64, 221./32};
+	double step = 0.5;
+	ASSERT_EQ(solver.GetK3(x, step, std::vector<double>{93./32, 4}), expected);
+}
+TEST(TestRungeKuttaSystem, TestGetKSum)
+{
+	std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
+    RungeKuttaSystem<double> solver(system);
+	std::vector<double> x{-0.5, 1, 2};
+	std::vector<double> expected{1089./64, 749./32};
+	double step = 0.5;
+	ASSERT_EQ(solver.GetKSum(x, step), expected);
+}
 TEST(TestRungeKuttaSystem, TestStep)
 {
     std::vector<double (*)(std::vector<double>)> system{ y_deriv, z_deriv };
     RungeKuttaSystem<double> solver(system);
     std::vector<double> actual = solver.Step(std::vector<double>{ 0, 0, 1 }, 1);
-    std::vector<double> expected{ 1 / 6, 10 / 3, 43 / 8 };
+    std::vector<double> expected{ 1, 10. / 3, 43. / 8 };
     ASSERT_EQ(actual, expected);
 }

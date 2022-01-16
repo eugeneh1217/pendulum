@@ -26,9 +26,13 @@ class RungeKuttaSystem
 		// x should be 1 larger than system for indep var.
 		std::vector<T> Evaluate(std::vector<T> x);
 		// initial should be 1 larger than system for indep var.
+		std::vector<T> GetK0(std::vector<T> x, T step);
+		std::vector<T> GetKMid(std::vector<T> x, T step, std::vector<T> prev_k);
+		std::vector<T> GetK3(std::vector<T> x, T step, std::vector<T> k2);
+		std::vector<T> GetKSum(std::vector<T> x, T step);
 		std::vector<T> Step(std::vector<T> initial, double step);
 	private:
-		std::vector <T (*)(std::vector<T>)> derivatives;
+		std::vector<T (*)(std::vector<T>)> derivatives;
 };
 
 template<typename T>
@@ -50,32 +54,42 @@ std::vector<T> RungeKuttaSystem<T>::Evaluate(std::vector<T> x)
 }
 
 template<typename T>
-std::vector<T> RungeKuttaSystem<T>::Step(std::vector<T> initial, double step)
+std::vector<T> RungeKuttaSystem<T>::GetK0(std::vector<T> x, T step)
+{
+	return vmath::ScalarProd(Evaluate(x), step);
+}
+
+template<typename T>
+std::vector<T> RungeKuttaSystem<T>::GetKMid(std::vector<T> x, T step, std::vector<T> prev_k)
+{
+	prev_k = prefix_vector(prev_k, step);
+	return vmath::ScalarProd(Evaluate(vmath::VectorSum(x, vmath::ScalarQuot(prev_k, 2))), step);
+}
+
+template<typename T>
+std::vector<T> RungeKuttaSystem<T>::GetK3(std::vector<T> x, T step, std::vector<T> k2)
+{
+	k2 = prefix_vector(k2, step);
+	return vmath::ScalarProd(Evaluate(vmath::VectorSum(x, k2)), step);
+}
+template<typename T>
+std::vector<T> RungeKuttaSystem<T>::GetKSum(std::vector<T> x, T step)
 {
 	std::vector<std::vector<T>> k;
-	std::vector<T> intermesso;
-	// k[0] = h * f(x[0], x[1], ..., x[n])
-	k.push_back(vmath::ScalarProd(Evaluate(initial), step));
-	intermesso = prefix_vector(k.back(), step);
-	intermesso = vmath::ScalarQuot(intermesso, 2);
-	// k[1] = h * f(x[0] + h/2, x[0] + k[0][0] / 2, ..., x[n] + k[0][n-1] / 2)
-	k.push_back(vmath::ScalarProd(Evaluate(vmath::VectorSum(initial, intermesso)), step));
-	intermesso = prefix_vector(k.back(), step);
-	intermesso = vmath::ScalarQuot(intermesso, 2);
-	// k[2] = h * f(x[0] + h/2, x[0] + k[1][0] / 2, ..., x[n] + k[1][n-1] / 2)
-	k.push_back(vmath::ScalarProd(Evaluate(vmath::VectorSum(initial, intermesso)), step));
-	intermesso = prefix_vector(k.back(), step);
-	// k[3] = h * f(x[0] + h, x[1] + k[2][0], ..., x[n] + k[2][n-1])
-	k.push_back(vmath::ScalarProd(Evaluate(vmath::VectorSum(initial, intermesso)), step));
-	//std::vector<T> next_x = ( k[0] + (k[1]/2) + (k[2]/2) + k[3] );
-	std::vector<T> next_x = vmath::VectorSum(
-		vmath::VectorSum(k[0], vmath::ScalarQuot(k[1], 2)),
-		vmath::VectorSum(vmath::ScalarQuot(k[2], 2), k[3])
-	);
-	/*next_x = vmath::SMap(next_x, 6, [](auto e) { return vmath::ScalarQuot(e, 6); });*/
-	next_x = vmath::ScalarQuot(next_x, 6);
-	next_x = prefix_vector(next_x, step);
-	return vmath::VectorSum(next_x, initial);
+	k.push_back(GetK0(x, step));
+	k.push_back(GetKMid(x, step, k.back()));
+	k.push_back(GetKMid(x, step, k.back()));
+	k.push_back(GetK3(x, step, k.back()));
+	std::vector<T> k_sum = vmath::VectorSum(k[0], vmath::ScalarProd(k[1], 2));
+	k_sum = vmath::VectorSum(k_sum, vmath::ScalarProd(k[2], 2));
+	return vmath::VectorSum(k_sum, k[3]);
+}
+
+template<typename T>
+std::vector<T> RungeKuttaSystem<T>::Step(std::vector<T> initial, double step)
+{
+	std::vector<T> kterm = prefix_vector(vmath::ScalarQuot(GetKSum(initial, step), 6), step);
+	return vmath::VectorSum(initial, kterm);
 }
 
 #endif
